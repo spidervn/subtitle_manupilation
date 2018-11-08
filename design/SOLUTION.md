@@ -24,13 +24,30 @@ Problem 02. How do we group subitles content by setences?
 Problem 03. What is the the effective way to group sentences by blocking-time?
 
 # Solutions
-Solution 01. For correctly parsing the subtitle file. We follows the order of the format of SRT file.
+Solution 01) For correctly parsing the subtitle file. We follows the order of the format of SRT file.
 The goal is that we setup a method is it not only correctly read the normal SRT file, but also deal well with the corrupted file.
 	
 The general apporaching is, read the text file line by line. 
-For each line, we indicate the 
+For each line, we indicate the Type of string of line.
+
+We use an array, called marked array. Each array element contains two properties: marked_type and value.
+
+We sequentially read the SRT file line by line. For each line, indicate the line's "MarkType". Then we look at the marked array, do these following steps: 
+	- If marked array is empty, then current line's MarkType must equal to 1, if it is not, report that this SRT file is invalid - we break the readline procedure and quit algorithm.
+	- If marked array is not empty, take the latest element of array, called L. If Next_cycle_3(L's marked_type) == MarkType, then we push the current line to the end of array. If it is not, then report that this SRT file is invalid - we break the readline procedure quit algorithm.
+
+Comment: 
+	- The obstacle of the algorithm for finding the answer is that: 	
+		i) What happens if the subtitle is a string which is similar to index or subtitle time? It make us confuse.
 
 We define some basic concepts:
 Type(s), next_cycle_3(t).
 Type(s) = 1; if s is a number
           2; if s is a subtitle time.
+		  3; if s is a content.
+		  4; if s is a blank/empty string.
+		  
+Solution_02) 
+For grouping sentences.
+
+		  
