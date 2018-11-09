@@ -53,15 +53,30 @@ The input for this problem is the marked_array, the output of solution_01.
 We create an output array. Each element of output array is the a SubTitleLine.
 
 	S1) Initialize the output array as an empty array.
-	S2) Incrementally build the output array by looping through each element of marked_array. 
-		For each element E:
-			If E.content.trim().endsWidth(".") 
-				=> Concat E into the last element of output.
-			If !E.content.trim().endsWith(".")
-				Append a new element to output array. 
-				Append a new element to output array.
+	S2) Incrementally build the output array by looping through each element of marked_array.
+		For each element E: We have two choice, append E to the output array, or concat E with the last element of output array. To determine which choice would be used, we check the value of E and use a half_flag. If half_flag = 0.5, it means that the last element of output array is building, and we should use the choice 2. If half_flag = 0, it means that the last element of output array has been completely constructed, and it is time to append new value to output array (choice 1).
 
-To group subtitles by sentences, we just simply go through the marked_array from start to end.
-The solution is that we call a 
+		The initial value of half_flag is 0.
+		For each element E of marked array - do do these checks:
+			if half_flag = 0:
+				Append E to output array.
+				Update value of half_flag to 0.5, to indicate that the newly element is building.
+			if half_flag = 0.5:
+				If E.content.trim().endsWidth(".") or E is the last element of input, then we do:
+					Concat E into the last element of output by:
+							concat E.content to last element.content
+							last_element.toTime = E.toTime
+					Update half_flag = 0, to indicate that the last value of output array has been completely built.
+				If !E.content.trim().endsWith(".") or E is not the last element, then we do:
+					Concat E into the last element of output by:
+							concat E.content to last element.content
+							last_element.toTime = E.toTime
+					
+Solution_03) 
+For effective grouping sentences by blocking time. 
+Firstly, we do the solution_02 to convert raw subtitle data into Subtitle data by sentences.
 
-
+We call that is the input array. 
+Then we do a procedure for grouping.
+Loop through the input array. 
+	For each element E. 

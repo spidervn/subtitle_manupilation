@@ -17,6 +17,7 @@ public:
 private:
     bool is_MarkType(const char* szLine, int n_mark_Type);
     int next_cycle_3(int type);
+    int parse_Subtitle_Time(const char* szLine, std::string& str_from_Time, std::string& str_To_Time);
 };
 
 #endif // !APP_IMPL_CSUBTITLEMANIPULATE_H_

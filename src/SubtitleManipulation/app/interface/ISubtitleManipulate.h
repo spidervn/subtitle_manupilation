@@ -6,8 +6,8 @@
 
 struct SubtitleLine {
     int index;
-    long fromTheTime;
-    long to_Time;
+    std::string fromTheTime;
+    std::string to_Time;
     std::string content;
 };
 
