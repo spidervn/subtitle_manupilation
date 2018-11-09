@@ -30,8 +30,6 @@ int CSubtitleManipulate::load_FromFile(const char* sz_File, std::vector<Subtitle
 	std::vector<string> v_c; 	// Vector of contents
 	std::vector<string> v_t;	// Vector of time
 
-	std::regex integer("(\\+|-)?[[:digit:]]+");
-
 	while (std::getline(file, line))
 	{
 		if (!is_MarkType(line.c_str(), 4))
@@ -108,6 +106,8 @@ int CSubtitleManipulate::writeToFile(const char* sz_File_Out, std::vector<Subtit
 
 bool CSubtitleManipulate::is_MarkType(char* szLine, int n_mark_Type)
 {
+	std::regex integer("[[:digit:]]+");
+	std::regex regex_subtime("");
 
 	return true;
 }
