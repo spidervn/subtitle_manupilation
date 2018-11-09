@@ -7,6 +7,11 @@
 
 using namespace std;
 
+#define MARK_TYPE_INDEX 	1
+#define MARK_TYPE_TIME 		2
+#define MARK_TYPE_CONTENT 	3
+#define MARK_TYPE_BLANK 	4
+
 CSubtitleManipulate::~CSubtitleManipulate()
 {
 }
@@ -16,14 +21,10 @@ int CSubtitleManipulate::load_FromFile(const char* sz_File, std::vector<Subtitle
     /* A state machine for reading the Subtitle file */
 	ifstream file(sz_File);
 	string line;
-
+	
 	int n_Ret = 0;
-	int MARK_TYPE_INDEX = 1;
-	int MARK_TYPE_TIME = 2;
-	int MARK_TYPE_CONTENT = 3;
-	int MARK_TYPE_BLANK = 4;
-
 	int last_type = 0;
+	int loop_desired_type = 0;
 	int arr[1000];
 
 	std::vector<int> v;			// Vector of mark types
@@ -34,11 +35,11 @@ int CSubtitleManipulate::load_FromFile(const char* sz_File, std::vector<Subtitle
 	{
 		if (!is_MarkType(line.c_str(), 4))
 		{
-			if (is_MarkType(line.c_str(),next_cycle_3(last_type))
+			loop_desired_type = next_cycle_3(last_type);
+			if (is_MarkType(line.c_str(),loop_desired_type))
 			{
 				// OK
-				last_type = next_cycle_3(last_type);
-
+				last_type = loop_desired_type;
 				v.push_back(last_type);
 
 				if (last_type == MARK_TYPE_TIME)
@@ -61,7 +62,8 @@ int CSubtitleManipulate::load_FromFile(const char* sz_File, std::vector<Subtitle
 				// Inform that the current file is invalid.				
 				// TODO: Add more information
 				n_Ret = 1;	// 
-				ret.tagData = v_c.size();	// The line which contains error
+				ret.tag_Data_00 = v_c.size();	// The line which contains error
+				ret.tag_Data_01 = loop_desired_type;
 			}
 		}
 		else 
@@ -85,12 +87,19 @@ int CSubtitleManipulate::load_FromFile(const char* sz_File, std::vector<Subtitle
 		}
 	}
 
-	ret.return_Code = n_Ret;
+	ret.return_Code = n_Ret;	
     return n_Ret;
 }
 
 int CSubtitleManipulate::groupingSentences(std::vector<SubtitleLine> v_sub_title, std::vector<SubtitleLine>& v_out)
 {
+	v_out.clear();
+
+	for (int i=0;i<v_sub_title.size();++i)
+	{
+		
+	}
+
     return 0;
 }
 
@@ -104,10 +113,27 @@ int CSubtitleManipulate::writeToFile(const char* sz_File_Out, std::vector<Subtit
     return 0;
 }
 
-bool CSubtitleManipulate::is_MarkType(char* szLine, int n_mark_Type)
+int CSubtitleManipulate::next_cycle_3(int type)
+{
+	int ret = 1;
+	if (type == 3)
+	{
+		ret = 1;
+	}
+	else if (type > 0 && type < 3)
+	{
+		ret = ret + 1;
+	}
+
+	return ret;
+}
+
+bool CSubtitleManipulate::is_MarkType(const char* szLine, int n_mark_Type)
 {
 	std::regex integer("[[:digit:]]+");
 	std::regex regex_subtime("");
+
+	
 
 	return true;
 }

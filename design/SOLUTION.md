@@ -39,15 +39,29 @@ We sequentially read the SRT file line by line. For each line, indicate the line
 Comment: 
 	- The obstacle of the algorithm for finding the answer is that: 	
 		i) What happens if the subtitle is a string which is similar to index or subtitle time? It make us confuse.
+	- The obstacle of the algorithm for finding 
 
-We define some basic concepts:
-Type(s), next_cycle_3(t).
-Type(s) = 1; if s is a number
-          2; if s is a subtitle time.
-		  3; if s is a content.
-		  4; if s is a blank/empty string.
-		  
+	We define some basic concepts:
+	Type(s), next_cycle_3(t).
+	Type(s) = 1; if s is a number
+	          2; if s is a subtitle time.
+			  3; if s is a content.
+			  4; if s is a blank/empty string.
+
 Solution_02) 
-For grouping sentences.
+The input for this problem is the marked_array, the output of solution_01.
+We create an output array. Each element of output array is the a SubTitleLine.
 
-		  
+	S1) Initialize the output array as an empty array.
+	S2) Incrementally build the output array by looping through each element of marked_array. 
+		For each element E:
+			If E.content.trim().endsWidth(".") 
+				=> Concat E into the last element of output.
+			If !E.content.trim().endsWith(".")
+				Append a new element to output array. 
+				Append a new element to output array.
+
+To group subtitles by sentences, we just simply go through the marked_array from start to end.
+The solution is that we call a 
+
+
