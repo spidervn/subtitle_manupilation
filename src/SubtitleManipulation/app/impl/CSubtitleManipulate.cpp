@@ -25,8 +25,10 @@ int CSubtitleManipulate::load_FromFile(const char* sz_File, std::vector<Subtitle
 	
 	int n_Ret = 0;
 	int last_type = 0;
-	int loop_desired_type = 0;
+	int loop_Passed_Type_ = 0;
 	int arr[1000];
+	int candiate_Mark_Types[2];
+	int count_Candidates_;
 
 	std::vector<int> v;			// Vector of mark types
 	std::vector<string> v_c; 	// Vector of contents
@@ -35,68 +37,79 @@ int CSubtitleManipulate::load_FromFile(const char* sz_File, std::vector<Subtitle
 	while (std::getline(file, line))
 	{
 		printf("GetLine: %s\r\n", line.c_str());
-		if (!is_MarkType(line.c_str(), 4))
-		{
-			loop_desired_type = next_cycle_3(last_type);
-			if (is_MarkType(line.c_str(),loop_desired_type))
-			{
-				// OK
-				last_type = loop_desired_type;
-				v.push_back(last_type);
+		next_candidateMarkTypes(last_type, candiate_Mark_Types, count_Candidates_);
+		loop_Passed_Type_ = 0;
 
-				if (last_type == MARK_TYPE_TIME)
+		for (int i=0;i<count_Candidates_;++i)
+		{
+			if (is_MarkType(line.c_str(), candiate_Mark_Types[i]))
+			{
+				loop_Passed_Type_ = candiate_Mark_Types[i];
+				break;
+			}
+		}
+
+		if (loop_Passed_Type_ > 0)
+		{
+			// OK
+			v.push_back(last_type);
+
+			if (loop_Passed_Type_ == MARK_TYPE_TIME)
+			{
+				v_t.push_back(line);
+			}
+			else if (loop_Passed_Type_ == MARK_TYPE_CONTENT)
+			{
+				if (last_type == MARK_TYPE_CONTENT)
 				{
-					v_t.push_back(line);
+					v_c[v_c.size()-1] = v_c[v_c.size()-1] + " " + line;	// Concat the new string
 				}
-				else if (last_type == MARK_TYPE_CONTENT)
+				else 
 				{
 					v_c.push_back(line);
 				}
-				else if (last_type == MARK_TYPE_INDEX)
-				{
-					int index = atoi(line.c_str());
-					// TODO: validate the index
-				}
 			}
-			else 
+			else if (loop_Passed_Type_ == MARK_TYPE_INDEX)
 			{
-				// Invalid file
-				// Inform that the current file is invalid.				
-				// TODO: Add more information
-				n_Ret = 1;	// 
-				ret.tag_Data_00 = v_c.size();	// The line which contains error
-				ret.tag_Data_01 = loop_desired_type;
-
-
-				printf("Error Here %s\r\n", line.c_str());
-				printf("DesiredType = %d\r\n", loop_desired_type);
+				int index = atoi(line.c_str());
+				// TODO: validate the index
 			}
+			last_type = loop_Passed_Type_;
 		}
 		else 
 		{
-			// Ignore the blank type
+			// Invalid file
+			// Inform that the current file is invalid.				
+			// TODO: Add more information
+			n_Ret = 1;	// 
+			ret.tag_Data_00 = v_c.size();	// The line which contains error
+			ret.tag_Data_01 = loop_Passed_Type_;
+
+			printf("Error Here %s\r\n", line.c_str());
+			printf("DesiredType = %d\r\n", loop_Passed_Type_);
 		}
+		
 	}
 
 	// Success
 	if (n_Ret == 0)
 	{
 		v_out.clear();
-		for (int i=0;i<v_t.size()/3;i++) {
+		for (int i=0;i<v_t.size();i++) {
 			SubtitleLine sl;
             string s_From_Time;
             string s_To_Time;
 			long fromTimeVal;
 			long to_Time_Val;
 
-            parse_Subtitle_Time(v_c[3*i+1].c_str(), s_From_Time, s_To_Time, fromTimeVal, to_Time_Val);
+            parse_Subtitle_Time(v_t[i].c_str(), s_From_Time, s_To_Time, fromTimeVal, to_Time_Val);
 
 			sl.index = i;
 			sl.fromTheTime = s_From_Time;			
 			sl.to_Time = s_To_Time;
 			sl.l_From_Time = fromTimeVal;
 			sl.l_ToTheTime = to_Time_Val;
-			sl.content = v_c[3*i + 2];
+			sl.content = v_c[i];
 
 			v_out.push_back(sl);
 		}
@@ -206,7 +219,6 @@ int CSubtitleManipulate::groupingSentences_ByBlockTime(int block_ByMilliSecs,std
 int CSubtitleManipulate::writeToFile(const char* sz_File_Out, std::vector<SubtitleLine> v_sub)
 {
 	int ret = 0;
-	
 	ofstream myfile (sz_File_Out);
 
   	if (myfile.is_open())
@@ -216,7 +228,6 @@ int CSubtitleManipulate::writeToFile(const char* sz_File_Out, std::vector<Subtit
 			myfile << (i+1) << endl;
 			myfile << v_sub[i].fromTheTime << " --> " << v_sub[i].to_Time << endl;
 			myfile << v_sub[i].content;
-
 			myfile << endl;
 		}
 		myfile.close();
@@ -229,16 +240,31 @@ int CSubtitleManipulate::writeToFile(const char* sz_File_Out, std::vector<Subtit
     return ret;
 }
 
-int CSubtitleManipulate::next_cycle_3(int type)
+int CSubtitleManipulate::next_candidateMarkTypes(int currentType, int arr_outCandidates[2], int& n_count)
 {
 	int ret = 1;
-	if (type == 3)
+	if (currentType == MARK_TYPE_CONTENT)
 	{
 		ret = 1;	// Ret = 1 || 3 is OK
+		arr_outCandidates[0] = MARK_TYPE_BLANK;
+		arr_outCandidates[1] = MARK_TYPE_CONTENT;
+		n_count = 2;
 	}
-	else if (type > 0 && type < 3)
+	else if (currentType == MARK_TYPE_INDEX || currentType == MARK_TYPE_TIME)
 	{
-		ret = type + 1;
+		arr_outCandidates[0] = currentType + 1;
+		n_count = 1;
+	}
+	else if (currentType == MARK_TYPE_BLANK)
+	{
+		arr_outCandidates[0] = MARK_TYPE_INDEX;
+		n_count = 1;
+	}
+	else 
+	{
+		// Default case
+		arr_outCandidates[0] = MARK_TYPE_INDEX;
+		n_count = 1;
 	}
 
 	return ret;
@@ -247,15 +273,19 @@ int CSubtitleManipulate::next_cycle_3(int type)
 bool CSubtitleManipulate::is_MarkType(const char* szLine, int n_mark_Type)
 {
     // 00:02:17,440 --> 00:02:20,375
-	std::regex regex_integer("[[:digit:]]+");
-	std::regex regex_subtime("([0-9]{2}\\:[0-9]{2}\\:[0-9]{2}\\,[0-9]{3})[[:space:]]*-->[[:space:]]*([0-9]{2}\\:[0-9]{2}\\:[0-9]{2}\\,[0-9]{3})");
-    
+	printf("TEST\r\n");
+	std::regex regex_integer("[0-9]+"); // ("[[:digit:]]+");
+	std::regex regex_subtime("[0-9]+"); // ("([0-9]{2}\\:[0-9]{2}\\:[0-9]{2}\\,[0-9]{3})[[:space:]]*-->[[:space:]]*([0-9]{2}\\:[0-9]{2}\\:[0-9]{2}\\,[0-9]{3})");
+    printf("TEST001\r\n");
+
     if (n_mark_Type == MARK_TYPE_INDEX)
     {
+		printf("HERE\r\n");
         return std::regex_match(szLine, regex_integer);
     }
     else if (n_mark_Type == MARK_TYPE_TIME)
     {
+		printf("HERE001\r\n");
         return std::regex_match(szLine, regex_subtime);
     }
     else if (n_mark_Type == MARK_TYPE_CONTENT)

@@ -36,7 +36,7 @@ We use an array, called marked array. Each array element contains two properties
 Because the content may be anything, It could be number or time, lead us to confuse with index and subtitle-time. 
 We use a tiny technique to get gird of that fuzzy. That is the order-acceptable Marktype.
 
-The order_acceptable_marktype of a type, is a function, which answer the list of types which is suitable for preceeding type. The list is order by priority, the sooner element, the more prioprity it is.
+The order_acceptable_marktype of a type, is a function, which answer the list of types which is suitable for preceeding type. The list is order by priority, the sooner element, the more priority it is.
 
 We sequentially read the SRT file line by line. For each line, indicate the line's candiade "MarkTypes" (May be more than one). Then we look at the marked array, do these following steps: 
 	
@@ -44,7 +44,9 @@ We sequentially read the SRT file line by line. For each line, indicate the line
 
 	- If marked array is not empty, take the latest element of array, called L. 
 		We do a complex checking between order_acceptable_marktype(L.marked_type) and MarkTypes. This is how complex checking works:
-			+ Go through each element of marktype, and 
+			+ Let x the first elements of order_acceptable_marktype(L.marked_type) which appear on MarkTypes
+			+ If x does not existed => The check process is not OK
+			+ If x does existed, => The check process is OK. And x is the result MarkType.
 		If the check process is OK, the append Line and selected MarkType to output array.
 		If the check process is not, then report that this SRT file is invalid - we break the readline procedure and quit algorithm.
 	
