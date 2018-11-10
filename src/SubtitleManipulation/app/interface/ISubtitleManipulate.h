@@ -9,6 +9,9 @@ struct SubtitleLine {
     std::string fromTheTime;
     std::string to_Time;
     std::string content;
+
+    long l_From_Time;   // Subtitle from time in milliseconds (start from 0)
+    long l_ToTheTime;   // Subtitle to time in milleseconds.
 };
 
 struct SuccessResult {

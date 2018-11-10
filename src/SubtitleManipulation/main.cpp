@@ -24,15 +24,23 @@ int main(int argc, char const *argv[])
     }
     else if (argc == 3)
     {
+        SuccessResult ret;
         std::vector<SubtitleLine> v_sub;
         std::vector<SubtitleLine> v_subSentence;
+        std::vector<SubtitleLine> v_out;
         pEng = new CSubtitleManipulate();
         
-        if (pEng->load_FromFile(argv[1], v_sub) == 0)
+        if (pEng->load_FromFile(argv[1], v_sub ,ret) == 0)
         {
             pEng->groupingSentences(v_sub, v_subSentence);
-            pEng->writeToFile(argv[2], v_subSentence);
-        }        
+            pEng->groupingSentences_ByBlockTime(120000, v_subSentence, v_out);
+            pEng->writeToFile(argv[2], v_out);
+            printf("Finished");
+        }
+        else 
+        {
+            printf("Could not parse file.\r\n");
+        }
     }
 
     return 0;
