@@ -73,10 +73,33 @@ We create an output array. Each element of output array is the a SubTitleLine.
 							last_element.toTime = E.toTime
 					
 Solution_03) 
-For effective grouping sentences by blocking time. 
-Firstly, we do the solution_02 to convert raw subtitle data into Subtitle data by sentences.
+For effective grouping sentences by blocking time, firstly, we do the solution_02 to convert raw subtitle data into Subtitle data by sentences.
 
-We call that is the input array. 
-Then we do a procedure for grouping.
-Loop through the input array. 
-	For each element E. 
+We call that is the input array. Then we do a procedure for grouping. Since we group by time, Let's choice time is the main criteria. Starts with range [0,BlockTime), merge every input elements E which sastifies the condition (E.fromTime >= 0 and E.toTime < BlockTime).
+
+Let's build every element of output. 
+The 1_st solution - Virtual ruler:
+	User a "virtual" ruler. 
+		- Arrange input elements to Time axis.
+	Then repeatly use ruler to indicate what elements should be inserted into array.
+	The ruler's length is equal BlockTime, initially, anchor point = the beginning time of first element of input(input[0]).
+	Use a label to count how many input has been processed, we call it processed_label, inital value of processed_label is zero.
+
+	We repeatly do these procedures until all many input element has been processed, or processed_label = length of input:
+		Put the ruler start at anchor point. 
+		Start scan each input elements, start from processed_label position, to find how many input elements overlap the ruler. We stop scanning once we have found an element which do not overlap the ruler, or we reach the end of input array.
+
+		![Use virtual ruler](https://github.com/spidervn/deductive_logical_solving/design/virtual_ruler.jpeg)
+
+		Since, the ruler length is greater than 0, and the anchor point is at the beginning of an unprocessed element, there are at least one element which overlap the ruler (*).
+
+		Enumerate all overlapped elements in ascending order, concat every content into a concated string. We create a new element E, which E.content is equal concated_string, E.fromTime is equal to the fromTime of the 1st overlapped elements, and E.toTime is equal to the toTime of the last overlapped elements. 
+		Append the new E to the output array.
+
+		We mark every overlapped elements as processed by increasing process_label to the number of overlapped elements. 
+
+		Move the anchor point to the start (fromTime) of the next un-processed input element. 
+
+		Repeat this procedure until all input element has been processed.
+
+	The output array is the result.
