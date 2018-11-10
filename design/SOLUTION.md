@@ -89,7 +89,7 @@ The 1_st solution - Virtual ruler:
 		Put the ruler start at anchor point. 
 		Start scan each input elements, start from processed_label position, to find how many input elements overlap the ruler. We stop scanning once we have found an element which do not overlap the ruler, or we reach the end of input array.
 
-		![Use virtual ruler](https://github.com/spidervn/deductive_logical_solving/design/virtual_ruler.jpeg)
+![Use virtual ruler](https://github.com/spidervn/deductive_logical_solving/design/virtual_ruler.jpeg)
 
 		Since, the ruler length is greater than 0, and the anchor point is at the beginning of an unprocessed element, there are at least one element which overlap the ruler (*).
 
