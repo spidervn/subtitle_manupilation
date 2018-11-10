@@ -36,7 +36,6 @@ int CSubtitleManipulate::load_FromFile(const char* sz_File, std::vector<Subtitle
 
 	while (std::getline(file, line))
 	{
-		printf("GetLine: %s\r\n", line.c_str());
 		next_candidateMarkTypes(last_type, candiate_Mark_Types, count_Candidates_);
 		loop_Passed_Type_ = 0;
 
@@ -52,7 +51,7 @@ int CSubtitleManipulate::load_FromFile(const char* sz_File, std::vector<Subtitle
 		if (loop_Passed_Type_ > 0)
 		{
 			// OK
-			v.push_back(last_type);
+			v.push_back(loop_Passed_Type_);
 
 			if (loop_Passed_Type_ == MARK_TYPE_TIME)
 			{
@@ -86,9 +85,15 @@ int CSubtitleManipulate::load_FromFile(const char* sz_File, std::vector<Subtitle
 			ret.tag_Data_01 = loop_Passed_Type_;
 
 			printf("Error Here %s\r\n", line.c_str());
-			printf("DesiredType = %d\r\n", loop_Passed_Type_);
+			printf("LastType = %d\r\n", last_type);
+
+			printf("Candidate=");
+			for (int i=0;i<count_Candidates_;++i) {
+				printf("%d,", candiate_Mark_Types[i]);
+			}
+			printf("\r\n");
+			break;
 		}
-		
 	}
 
 	// Success
@@ -139,7 +144,7 @@ int CSubtitleManipulate::groupingSentences(std::vector<SubtitleLine> v_sub_title
 			if (i==v_sub_title.size() -1 || v_sub_title[i].content[v_sub_title[i].content.size()-1] == '.')
 			{
 				// Concat content to the last Element & update ToTime 
-				v_out[v_out.size()-1].content += v_sub_title[i].content;
+				v_out[v_out.size()-1].content += " " + v_sub_title[i].content;
 				v_out[v_out.size()-1].to_Time = v_sub_title[i].to_Time;
 				v_out[v_out.size()-1].l_ToTheTime = v_sub_title[i].l_ToTheTime;
 
@@ -166,6 +171,7 @@ int CSubtitleManipulate::groupingSentences_ByBlockTime(int block_ByMilliSecs,std
 	int anchorPoint = 0;
 	int label_BeenProcessed = 0;
 
+	// printf("len = %d\r\n", v_sub_title.size());
 	v_out.clear();
 	if (v_sub_title.size() > 0)
 	{
@@ -178,17 +184,23 @@ int CSubtitleManipulate::groupingSentences_ByBlockTime(int block_ByMilliSecs,std
 			int endingRuler;
 			int i = label_BeenProcessed;
 
-			new_E.content = "";
-			new_E.l_From_Time = -1;
-
 			anchorPoint = v_sub_title[i].l_From_Time;
 			begin_Ruler = anchorPoint;
 			endingRuler = anchorPoint + nRulerWidth;
 
-			while (endingRuler > v_sub_title[i].l_From_Time && 
+			new_E.content = "";
+			new_E.l_From_Time = v_sub_title[i].l_From_Time;
+			new_E.fromTheTime = v_sub_title[i].fromTheTime;
+			new_E.l_ToTheTime = -1;
+
+			while (i < v_sub_title.size() && endingRuler > v_sub_title[i].l_From_Time && 
 					v_sub_title[i].l_ToTheTime >= begin_Ruler)	// overlapped between [beginRule, endingRuler) and [v_sub_title[i].l_From_Time, v_sub_title[i].l_ToTheTime]
 			{
-				new_E.content += v_sub_title[i].content;
+				// printf("Find a overlapped: %s\r\n", v_sub_title[i].content.c_str());
+				// printf("\tTime=(%s --> %s) = (%d --> %d)\r\n", v_sub_title[i].fromTheTime.c_str(), v_sub_title[i].to_Time.c_str(), v_sub_title[i].l_From_Time, v_sub_title[i].l_ToTheTime);
+				// printf("\tPosition = %d\r\n", i);
+
+				new_E.content += new_E.l_ToTheTime < 0 ? v_sub_title[i].content : "\r\n" + v_sub_title[i].content;
 				new_E.l_ToTheTime = v_sub_title[i].l_ToTheTime;
 				new_E.to_Time = v_sub_title[i].to_Time;
 
@@ -202,6 +214,7 @@ int CSubtitleManipulate::groupingSentences_ByBlockTime(int block_ByMilliSecs,std
 
 			if (i > label_BeenProcessed)
 			{
+				// printf("*****************************************ANEW\r\n");
 				v_out.push_back(new_E);
 			}
 			else 
@@ -218,16 +231,17 @@ int CSubtitleManipulate::groupingSentences_ByBlockTime(int block_ByMilliSecs,std
 
 int CSubtitleManipulate::writeToFile(const char* sz_File_Out, std::vector<SubtitleLine> v_sub)
 {
+	printf("WRite to File\r\n");
 	int ret = 0;
 	ofstream myfile (sz_File_Out);
 
   	if (myfile.is_open())
   	{
-		for (int i=0;i=v_sub.size();++i)
+		for (int i=0;i<v_sub.size();++i)
 		{
 			myfile << (i+1) << endl;
 			myfile << v_sub[i].fromTheTime << " --> " << v_sub[i].to_Time << endl;
-			myfile << v_sub[i].content;
+			myfile << v_sub[i].content << endl;
 			myfile << endl;
 		}
 		myfile.close();
@@ -273,19 +287,15 @@ int CSubtitleManipulate::next_candidateMarkTypes(int currentType, int arr_outCan
 bool CSubtitleManipulate::is_MarkType(const char* szLine, int n_mark_Type)
 {
     // 00:02:17,440 --> 00:02:20,375
-	printf("TEST\r\n");
 	std::regex regex_integer("[0-9]+"); // ("[[:digit:]]+");
-	std::regex regex_subtime("[0-9]+"); // ("([0-9]{2}\\:[0-9]{2}\\:[0-9]{2}\\,[0-9]{3})[[:space:]]*-->[[:space:]]*([0-9]{2}\\:[0-9]{2}\\:[0-9]{2}\\,[0-9]{3})");
-    printf("TEST001\r\n");
+	std::regex regex_subtime("([0-9]{2}\\:[0-9]{2}\\:[0-9]{2}\\,[0-9]{3})[[:space:]]*-->[[:space:]]*([0-9]{2}\\:[0-9]{2}\\:[0-9]{2}\\,[0-9]{3})");
 
     if (n_mark_Type == MARK_TYPE_INDEX)
     {
-		printf("HERE\r\n");
         return std::regex_match(szLine, regex_integer);
     }
     else if (n_mark_Type == MARK_TYPE_TIME)
     {
-		printf("HERE001\r\n");
         return std::regex_match(szLine, regex_subtime);
     }
     else if (n_mark_Type == MARK_TYPE_CONTENT)
@@ -322,13 +332,13 @@ int CSubtitleManipulate::parse_Subtitle_Time(const char* szLine, std::string& st
     
 		regex_match(str_from_Time.c_str(), milli_match, regex_milli);
 		int n_startTime = (atoi(string(milli_match[1]).c_str()) * 60 * 60  + 
-							atoi(string(milli_match[2]).c_str()) + 60 + 
+							atoi(string(milli_match[2]).c_str()) * 60 + 
 							atoi(string(milli_match[3]).c_str()) )  * 1000 + 
 							atoi(string(milli_match[4]).c_str());
 
 		regex_match(str_To_Time.c_str(), milli_match, regex_milli);
 		int n_ToTheTime = (atoi(string(milli_match[1]).c_str()) * 60 * 60  + 
-							atoi(string(milli_match[2]).c_str()) + 60 + 
+							atoi(string(milli_match[2]).c_str()) * 60 + 
 							atoi(string(milli_match[3]).c_str()) )  * 1000 + 
 							atoi(string(milli_match[4]).c_str());
 

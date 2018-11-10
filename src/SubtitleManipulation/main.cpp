@@ -33,7 +33,8 @@ int main(int argc, char const *argv[])
         if (pEng->load_FromFile(argv[1], v_sub ,ret) == 0)
         {
             pEng->groupingSentences(v_sub, v_subSentence);
-            pEng->groupingSentences_ByBlockTime(120000, v_subSentence, v_out);
+            printf("Grouping by Block:\r\n");
+            pEng->groupingSentences_ByBlockTime(45000, v_subSentence, v_out);
             pEng->writeToFile(argv[2], v_out);
             printf("Finished");
         }
