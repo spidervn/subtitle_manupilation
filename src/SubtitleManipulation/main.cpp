@@ -28,8 +28,8 @@ int main(int argc, char const *argv[])
         std::vector<SubtitleLine> v_sub;
         std::vector<SubtitleLine> v_subSentence;
         std::vector<SubtitleLine> v_out;
-        pEng = new CSubtitleManipulate();
         
+        pEng = new CSubtitleManipulate();
         if (pEng->load_FromFile(argv[1], v_sub ,ret) == 0)
         {
             pEng->groupingSentences(v_sub, v_subSentence);

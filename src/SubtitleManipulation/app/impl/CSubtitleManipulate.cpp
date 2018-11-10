@@ -34,6 +34,7 @@ int CSubtitleManipulate::load_FromFile(const char* sz_File, std::vector<Subtitle
 
 	while (std::getline(file, line))
 	{
+		printf("GetLine: %s\r\n", line.c_str());
 		if (!is_MarkType(line.c_str(), 4))
 		{
 			loop_desired_type = next_cycle_3(last_type);
@@ -65,6 +66,10 @@ int CSubtitleManipulate::load_FromFile(const char* sz_File, std::vector<Subtitle
 				n_Ret = 1;	// 
 				ret.tag_Data_00 = v_c.size();	// The line which contains error
 				ret.tag_Data_01 = loop_desired_type;
+
+
+				printf("Error Here %s\r\n", line.c_str());
+				printf("DesiredType = %d\r\n", loop_desired_type);
 			}
 		}
 		else 
@@ -229,11 +234,11 @@ int CSubtitleManipulate::next_cycle_3(int type)
 	int ret = 1;
 	if (type == 3)
 	{
-		ret = 1;
+		ret = 1;	// Ret = 1 || 3 is OK
 	}
 	else if (type > 0 && type < 3)
 	{
-		ret = ret + 1;
+		ret = type + 1;
 	}
 
 	return ret;
@@ -244,8 +249,6 @@ bool CSubtitleManipulate::is_MarkType(const char* szLine, int n_mark_Type)
     // 00:02:17,440 --> 00:02:20,375
 	std::regex regex_integer("[[:digit:]]+");
 	std::regex regex_subtime("([0-9]{2}\\:[0-9]{2}\\:[0-9]{2}\\,[0-9]{3})[[:space:]]*-->[[:space:]]*([0-9]{2}\\:[0-9]{2}\\:[0-9]{2}\\,[0-9]{3})");
-    std::smatch subtime_match;
-    std::string str01 = "subject";
     
     if (n_mark_Type == MARK_TYPE_INDEX)
     {
@@ -275,29 +278,29 @@ int CSubtitleManipulate::parse_Subtitle_Time(const char* szLine, std::string& st
     int ret = 1;
     std::regex regex_subtime("([0-9]{2}\\:[0-9]{2}\\:[0-9]{2}\\,[0-9]{3})[[:space:]]*-->[[:space:]]*([0-9]{2}\\:[0-9]{2}\\:[0-9]{2}\\,[0-9]{3})");
 	std::regex regex_milli("([0-9]{2})\\:([0-9]{2})\\:([0-9]{2})\\,([0-9]{3})");
-    std::smatch subtime_match;
-	std::smatch milli_match;
+    std::cmatch subtime_match;
+	std::cmatch milli_match;
 
 	long fromTimeMilli = 0;
 	long toTimeMilli = 0;
 
     if (regex_match(szLine, subtime_match, regex_subtime) && subtime_match.size() == 3)
     {
-        str_from_Time = subtime_match[1].str;
-        str_To_Time = subtime_match[2].str;
+        str_from_Time = subtime_match[1];
+        str_To_Time = subtime_match[2];
         ret = 0;    // Success
     
 		regex_match(str_from_Time.c_str(), milli_match, regex_milli);
-		int n_startTime = (atoi(milli_match[1].str) * 60 * 60  + 
-							atoi(milli_match[2].str) + 60 + 
-							atoi(milli_match[3].str)) * 1000 + 
-							atoi(milli_match[4].str);
+		int n_startTime = (atoi(string(milli_match[1]).c_str()) * 60 * 60  + 
+							atoi(string(milli_match[2]).c_str()) + 60 + 
+							atoi(string(milli_match[3]).c_str()) )  * 1000 + 
+							atoi(string(milli_match[4]).c_str());
 
 		regex_match(str_To_Time.c_str(), milli_match, regex_milli);
-		int n_ToTheTime = (atoi(milli_match[1].str) * 60 * 60  + 
-							atoi(milli_match[2].str) + 60 + 
-							atoi(milli_match[3].str)) * 1000 + 
-							atoi(milli_match[4].str);
+		int n_ToTheTime = (atoi(string(milli_match[1]).c_str()) * 60 * 60  + 
+							atoi(string(milli_match[2]).c_str()) + 60 + 
+							atoi(string(milli_match[3]).c_str()) )  * 1000 + 
+							atoi(string(milli_match[4]).c_str());
 
 		fromTimeVal = n_startTime;
 		to_Time_Val = n_ToTheTime;

@@ -21,4 +21,3 @@ private:
 };
 
 #endif // !APP_IMPL_CSUBTITLEMANIPULATE_H_
-
