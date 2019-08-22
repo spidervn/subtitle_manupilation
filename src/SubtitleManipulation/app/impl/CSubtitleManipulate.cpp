@@ -36,6 +36,7 @@ int CSubtitleManipulate::load_FromFile(const char* sz_File, std::vector<Subtitle
 
 	while (std::getline(file, line))
 	{
+		printf("Load line=%s\r\n", line.c_str());
 		next_candidateMarkTypes(last_type, candiate_Mark_Types, count_Candidates_);
 		loop_Passed_Type_ = 0;
 
@@ -118,6 +119,8 @@ int CSubtitleManipulate::load_FromFile(const char* sz_File, std::vector<Subtitle
 
 			v_out.push_back(sl);
 		}
+
+		printf("Success(n=%d)\r\n", v_out.size());
 	}
 
 	ret.return_Code = n_Ret;	
@@ -126,6 +129,9 @@ int CSubtitleManipulate::load_FromFile(const char* sz_File, std::vector<Subtitle
 
 int CSubtitleManipulate::groupingSentences(std::vector<SubtitleLine> v_sub_title, std::vector<SubtitleLine>& v_out)
 {
+	//@Temp
+	printf("Start GroupingSentences(line=%d)\r\n", v_sub_title.size());
+
 	double d_half_flag = 0;	// Flag for the Bulding state of last element 
 	v_out.clear();
     
@@ -141,7 +147,10 @@ int CSubtitleManipulate::groupingSentences(std::vector<SubtitleLine> v_sub_title
 		}
 		else if (d_half_flag == 0.5)	// The last element is building
 		{
-			if (i==v_sub_title.size() -1 || v_sub_title[i].content[v_sub_title[i].content.size()-1] == '.')
+			int newLen = v_out[v_out.size()-1].content.size() + v_sub_title[i].content.size();
+			// Is the end of a sentence?
+			//		End sentence = 
+			if (i==v_sub_title.size() -1 || v_sub_title[i].content[v_sub_title[i].content.size()-1] == '.' || newLen > 120)
 			{
 				// Concat content to the last Element & update ToTime 
 				v_out[v_out.size()-1].content += " " + v_sub_title[i].content;
@@ -161,6 +170,8 @@ int CSubtitleManipulate::groupingSentences(std::vector<SubtitleLine> v_sub_title
 		}
 	}
 
+	printf("After grouping(vout.size=%d)\r\n", v_out.size());
+
     return 0;
 }
 
@@ -171,7 +182,7 @@ int CSubtitleManipulate::groupingSentences_ByBlockTime(int block_ByMilliSecs,std
 	int anchorPoint = 0;
 	int label_BeenProcessed = 0;
 
-	// printf("len = %d\r\n", v_sub_title.size());
+	printf("len = %d\r\n", v_sub_title.size());
 	v_out.clear();
 	if (v_sub_title.size() > 0)
 	{
@@ -188,6 +199,13 @@ int CSubtitleManipulate::groupingSentences_ByBlockTime(int block_ByMilliSecs,std
 			begin_Ruler = anchorPoint;
 			endingRuler = anchorPoint + nRulerWidth;
 
+			printf("Scanning at(i=%d): begin_Ruler=%d; ending_Ruler=%d; \r\n", i, begin_Ruler, endingRuler);
+			printf("\tv_subtitle[%d]={l_fromTime=%d; l_toTheTime=%d; fromTime=%s; ToTime=%s}\r\n", 
+								i, v_sub_title[i].l_From_Time,
+								v_sub_title[i].l_ToTheTime,
+								v_sub_title[i].fromTheTime.c_str(),
+								v_sub_title[i].to_Time.c_str());
+
 			new_E.content = "";
 			new_E.l_From_Time = v_sub_title[i].l_From_Time;
 			new_E.fromTheTime = v_sub_title[i].fromTheTime;
@@ -196,9 +214,9 @@ int CSubtitleManipulate::groupingSentences_ByBlockTime(int block_ByMilliSecs,std
 			while (i < v_sub_title.size() && endingRuler > v_sub_title[i].l_From_Time && 
 					v_sub_title[i].l_ToTheTime >= begin_Ruler)	// overlapped between [beginRule, endingRuler) and [v_sub_title[i].l_From_Time, v_sub_title[i].l_ToTheTime]
 			{
-				// printf("Find a overlapped: %s\r\n", v_sub_title[i].content.c_str());
-				// printf("\tTime=(%s --> %s) = (%d --> %d)\r\n", v_sub_title[i].fromTheTime.c_str(), v_sub_title[i].to_Time.c_str(), v_sub_title[i].l_From_Time, v_sub_title[i].l_ToTheTime);
-				// printf("\tPosition = %d\r\n", i);
+				printf("Find a overlapped: %s\r\n", v_sub_title[i].content.c_str());
+				printf("\tTime=(%s --> %s) = (%d --> %d)\r\n", v_sub_title[i].fromTheTime.c_str(), v_sub_title[i].to_Time.c_str(), v_sub_title[i].l_From_Time, v_sub_title[i].l_ToTheTime);
+				printf("\tPosition = %d\r\n", i);
 
 				new_E.content += new_E.l_ToTheTime < 0 ? v_sub_title[i].content : "\r\n" + v_sub_title[i].content;
 				new_E.l_ToTheTime = v_sub_title[i].l_ToTheTime;
@@ -214,12 +232,13 @@ int CSubtitleManipulate::groupingSentences_ByBlockTime(int block_ByMilliSecs,std
 
 			if (i > label_BeenProcessed)
 			{
-				// printf("*****************************************ANEW\r\n");
+				printf("*****************************************ANEW\r\n");
 				v_out.push_back(new_E);
 			}
 			else 
 			{
-				printf("ERRRORRRRRRRRRRRRRRRRRR\r\n");
+				printf("ERRRORRRRRRRRRRRRRRRRRR at i=%d; LabelProcesssed=%d\r\n", i, label_BeenProcessed);
+				break;
 			}
 
 			label_BeenProcessed = i;
@@ -344,6 +363,14 @@ int CSubtitleManipulate::parse_Subtitle_Time(const char* szLine, std::string& st
 
 		fromTimeVal = n_startTime;
 		to_Time_Val = n_ToTheTime;
+
+		// @@Data Error
+		// Work-around with Time error
+		if (to_Time_Val < fromTimeVal)
+		{
+			to_Time_Val = fromTimeVal;
+			str_To_Time = str_from_Time;
+		}
 	}
 
     return ret;
